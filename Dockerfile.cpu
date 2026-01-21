@@ -1,13 +1,11 @@
 FROM python:3.13-slim
-
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
-
 WORKDIR /app
-
 ARG EXTRAS
 ARG HF_PRECACHE_DIR
 ARG HF_TKN_FILE
+ARG ENABLE_DIARIZATION
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -31,6 +29,14 @@ RUN if [ -n "$EXTRAS" ]; then \
       pip install --no-cache-dir whisperlivekit; \
     fi
 
+# Conditionally install NeMo for diarization
+RUN if [ -n "$ENABLE_DIARIZATION" ]; then \
+      echo "Installing NeMo for diarization"; \
+      pip install --no-cache-dir "git+https://github.com/NVIDIA/NeMo.git@main#egg=nemo_toolkit[asr]"; \
+    else \
+      echo "Skipping diarization dependencies"; \
+    fi
+
 # Enable in-container caching for Hugging Face models
 VOLUME ["/root/.cache/huggingface/hub"]
 
@@ -52,10 +58,6 @@ RUN if [ -n "$HF_TKN_FILE" ]; then \
       echo "No Hugging Face token file specified, skipping token setup"; \
     fi
     
-# Expose port for the transcription server
 EXPOSE 8000
-
 ENTRYPOINT ["whisperlivekit-server", "--host", "0.0.0.0"]
-
-# Default args - you might want to use a smaller model for CPU
 CMD ["--model", "tiny"]
