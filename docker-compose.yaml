@@ -9,4 +9,4 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
-    command: ["--model", "base", "--language", "en", "--diarization"]
+    command: ["--model", "large-v3-turbo.en", "--language", "en", "--diarization"]
